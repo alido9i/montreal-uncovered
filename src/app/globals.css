@@ -2,25 +2,107 @@
 
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #000000;
+  --accent: #FF0033;
+  --gray-dark: #1A1A1A;
+  --surface: #ffffff;
+  --surface-2: #f9fafb;
+  --border: #e5e7eb;
+  --muted: #6b7280;
+}
+
+.dark {
+  --background: #0a0a0a;
+  --foreground: #f0f0f0;
+  --surface: #141414;
+  --surface-2: #1a1a1a;
+  --border: #262626;
+  --muted: #9ca3af;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-accent: var(--accent);
+  --color-gray-dark: var(--gray-dark);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+img {
+  transition: opacity 0.3s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--background); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #FF0033; }
+.dark ::-webkit-scrollbar-track { background: #0a0a0a; }
+
+::selection { background-color: #FF0033; color: white; }
+
+.scrollbar-none::-webkit-scrollbar { display: none; }
+.scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Prose — articles */
+.prose h2 {
+  position: relative;
+  padding-left: 16px;
+}
+
+.prose h2::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 4px;
+  bottom: 4px;
+  width: 3px;
+  background-color: #FF0033;
+  border-radius: 2px;
+}
+
+/* Dark mode prose */
+.dark .prose p,
+.dark .prose li {
+  color: #d1d5db;
+}
+
+.dark .prose strong {
+  color: #f3f4f6;
+}
+
+.dark .prose h2,
+.dark .prose h3 {
+  color: #f9fafb;
+}
+
+/* Satire section column style */
+.satire-column {
+  column-count: 2;
+  column-gap: 2rem;
+  column-rule: 1px solid var(--border);
+}
+
+@media (max-width: 768px) {
+  .satire-column {
+    column-count: 1;
+  }
 }
