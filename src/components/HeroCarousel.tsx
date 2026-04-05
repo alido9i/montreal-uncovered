@@ -150,56 +150,78 @@ export default function HeroCarousel({ slides }: HeroCarouselProps) {
           </motion.div>
         </AnimatePresence>
 
-        {/* Navigation dots + progress */}
+        {/* Barre de navigation unifiée — bas droite (prev + dots + counter + next) */}
         {slides.length > 1 && (
-          <div className="absolute bottom-6 right-6 flex items-center gap-2">
-            {/* Slide counter */}
-            <span className="text-xs font-mono text-gray-500 mr-2">
-              {String(current + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
-            </span>
-
-            {slides.map((_, i) => (
-              <button
-                key={i}
-                onClick={() => goTo(i)}
-                className="relative w-8 h-1 bg-white/20 overflow-hidden rounded-full"
-                aria-label={`Slide ${i + 1}`}
-              >
-                {i === current && (
-                  <motion.div
-                    className="absolute inset-y-0 left-0 bg-[#FF0033] rounded-full"
-                    initial={{ width: "0%" }}
-                    animate={{ width: "100%" }}
-                    transition={{ duration: AUTOPLAY_MS / 1000, ease: "linear" }}
-                    key={`progress-${current}`}
-                  />
-                )}
-                {i < current && <div className="absolute inset-0 bg-white/50 rounded-full" />}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Prev / Next arrows */}
-        {slides.length > 1 && (
-          <div className="absolute top-1/2 -translate-y-1/2 left-0 right-0 flex justify-between px-4 pointer-events-none">
+          <div className="absolute bottom-6 right-6 flex items-center gap-3">
+            {/* Prev */}
             <motion.button
-              onClick={() => { setDirection(-1); setCurrent((current - 1 + slides.length) % slides.length); }}
-              className="pointer-events-auto w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-black/60 transition-all"
+              onClick={() => {
+                setDirection(-1);
+                setCurrent((current - 1 + slides.length) % slides.length);
+              }}
+              className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/80 hover:text-white hover:bg-black/70 transition-all border border-white/10"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
+              aria-label="Slide précédent"
             >
-              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <svg
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
                 <path d="M15 18l-6-6 6-6" />
               </svg>
             </motion.button>
+
+            {/* Dots + progress */}
+            <div className="flex items-center gap-2">
+              {slides.map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => goTo(i)}
+                  className="relative w-8 h-1 bg-white/20 overflow-hidden rounded-full"
+                  aria-label={`Slide ${i + 1}`}
+                >
+                  {i === current && (
+                    <motion.div
+                      className="absolute inset-y-0 left-0 bg-[#FF0033] rounded-full"
+                      initial={{ width: "0%" }}
+                      animate={{ width: "100%" }}
+                      transition={{ duration: AUTOPLAY_MS / 1000, ease: "linear" }}
+                      key={`progress-${current}`}
+                    />
+                  )}
+                  {i < current && (
+                    <div className="absolute inset-0 bg-white/50 rounded-full" />
+                  )}
+                </button>
+              ))}
+            </div>
+
+            {/* Counter */}
+            <span className="text-xs font-mono text-gray-400 tabular-nums">
+              {String(current + 1).padStart(2, "0")} / {String(slides.length).padStart(2, "0")}
+            </span>
+
+            {/* Next */}
             <motion.button
               onClick={next}
-              className="pointer-events-auto w-10 h-10 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center text-white/70 hover:text-white hover:bg-black/60 transition-all"
+              className="w-9 h-9 rounded-full bg-black/40 backdrop-blur-sm flex items-center justify-center text-white/80 hover:text-white hover:bg-black/70 transition-all border border-white/10"
               whileHover={{ scale: 1.1 }}
               whileTap={{ scale: 0.9 }}
+              aria-label="Slide suivant"
             >
-              <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <svg
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                viewBox="0 0 24 24"
+              >
                 <path d="M9 18l6-6-6-6" />
               </svg>
             </motion.button>
