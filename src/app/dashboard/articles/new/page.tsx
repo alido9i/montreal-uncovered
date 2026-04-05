@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import RichEditor from "@/components/RichEditor";
 
 interface Category {
   id: string;
@@ -139,20 +140,11 @@ export default function NewArticlePage() {
 
         {/* Contenu */}
         <div>
-          <label htmlFor="content" className="block text-sm font-bold mb-1">
-            Contenu
-          </label>
-          <p className="text-xs text-gray-400 mb-2">
-            Utilisez du Markdown : ## pour les titres, **gras**, *italique*, - pour les listes
-          </p>
-          <textarea
-            id="content"
-            required
-            rows={16}
+          <label className="block text-sm font-bold mb-2">Contenu</label>
+          <RichEditor
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={setContent}
             placeholder="Écrivez votre article ici…"
-            className="w-full border-2 border-gray-200 px-4 py-3 text-sm focus:outline-none focus:border-black resize-y font-mono leading-relaxed"
           />
         </div>
 

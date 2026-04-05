@@ -1,6 +1,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CategoryNav from "@/components/CategoryNav";
+import AdSlot from "@/components/AdSlot";
 import HeroCarousel from "@/components/HeroCarousel";
 import ArticleCard from "@/components/ArticleCard";
 import TrendingSection from "@/components/TrendingSection";
@@ -124,6 +125,11 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {/* ── AD — entre les blocs éditoriaux ──────────── */}
+        <section className="max-w-7xl mx-auto px-4">
+          <AdSlot slot="2222222222" format="horizontal" />
+        </section>
+
         {/* ── GASTRONOMIE STRIP ────────────────────────── */}
         {gastroArticles.length > 0 && (
           <section className="bg-[var(--surface-2)] dark:bg-[var(--surface)] py-14">
@@ -179,6 +185,11 @@ export default async function HomePage() {
             </div>
           </section>
         )}
+
+        {/* ── AD — avant la section catégories ─────────── */}
+        <section className="max-w-7xl mx-auto px-4 py-4">
+          <AdSlot slot="3333333333" format="horizontal" />
+        </section>
 
         {/* ── CATEGORIES ───────────────────────────────── */}
         <section className="bg-black text-white py-14">

@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
@@ -16,10 +17,20 @@ const navLinks = [
 ];
 
 export default function Header() {
+  const router = useRouter();
   const { data: session } = useSession();
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  function handleSearchSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const q = searchQuery.trim();
+    if (q.length < 2) return;
+    router.push(`/recherche?q=${encodeURIComponent(q)}`);
+    setSearchOpen(false);
+    setSearchQuery("");
+  }
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
@@ -93,20 +104,38 @@ export default function Header() {
           {/* Search */}
           <AnimatePresence>
             {searchOpen ? (
-              <motion.input
+              <motion.form
                 key="search"
-                autoFocus
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onBlur={() => { setSearchOpen(false); setSearchQuery(""); }}
-                placeholder="Rechercher…"
-                className="bg-white/10 backdrop-blur-sm text-white px-4 py-1.5 rounded-full text-sm w-52 outline-none border border-white/20 placeholder:text-gray-400 focus:border-[#FF0033] transition-colors"
+                onSubmit={handleSearchSubmit}
                 initial={{ width: 0, opacity: 0 }}
                 animate={{ width: 208, opacity: 1 }}
                 exit={{ width: 0, opacity: 0 }}
                 transition={{ duration: 0.3, ease: "easeInOut" }}
-              />
+                role="search"
+              >
+                <input
+                  autoFocus
+                  type="search"
+                  name="q"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onBlur={() => {
+                    // Laisse le submit se déclencher avant de fermer
+                    setTimeout(() => {
+                      if (!searchQuery.trim()) setSearchOpen(false);
+                    }, 150);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      setSearchOpen(false);
+                      setSearchQuery("");
+                    }
+                  }}
+                  placeholder="Rechercher…"
+                  aria-label="Rechercher un article"
+                  className="w-full bg-white/10 backdrop-blur-sm text-white px-4 py-1.5 rounded-full text-sm outline-none border border-white/20 placeholder:text-gray-400 focus:border-[#FF0033] transition-colors"
+                />
+              </motion.form>
             ) : (
               <motion.button
                 key="search-btn"
