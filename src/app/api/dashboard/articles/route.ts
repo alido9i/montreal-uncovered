@@ -27,6 +27,12 @@ const createArticleSchema = z.object({
     .optional()
     .nullable()
     .or(z.literal("")),
+  imageCredit: z
+    .string()
+    .trim()
+    .max(500, "Le crédit photo ne peut pas dépasser 500 caractères.")
+    .optional()
+    .nullable(),
   published: z.boolean().optional(),
 });
 
@@ -116,7 +122,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { title, content, excerpt, categoryId, imageUrl, published } =
+    const { title, content, excerpt, categoryId, imageUrl, imageCredit, published } =
       parsed.data;
 
     // Vérifier que la catégorie existe (évite une erreur 500 sur clé étrangère)
@@ -137,6 +143,7 @@ export async function POST(request: NextRequest) {
         content,
         excerpt: excerpt || null,
         imageUrl: imageUrl || null,
+        imageCredit: imageCredit || null,
         categoryId,
         authorId: session.user.id,
         published: published ?? false,

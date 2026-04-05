@@ -29,6 +29,12 @@ const updateArticleSchema = z.object({
     .optional()
     .nullable()
     .or(z.literal("")),
+  imageCredit: z
+    .string()
+    .trim()
+    .max(500, "Le crédit photo ne peut pas dépasser 500 caractères.")
+    .optional()
+    .nullable(),
   published: z.boolean().optional(),
 });
 
@@ -53,6 +59,7 @@ export async function GET(
         content: true,
         excerpt: true,
         imageUrl: true,
+        imageCredit: true,
         published: true,
         publishedAt: true,
         views: true,
@@ -102,7 +109,7 @@ export async function PUT(
       );
     }
 
-    const { title, content, excerpt, categoryId, imageUrl, published } =
+    const { title, content, excerpt, categoryId, imageUrl, imageCredit, published } =
       parsed.data;
 
     // Si la catégorie change, vérifier qu'elle existe
@@ -123,6 +130,7 @@ export async function PUT(
         ...(content && { content }),
         excerpt: excerpt ?? undefined,
         imageUrl: imageUrl ?? undefined,
+        imageCredit: imageCredit ?? undefined,
         ...(categoryId && { categoryId }),
         ...(published !== undefined && {
           published,

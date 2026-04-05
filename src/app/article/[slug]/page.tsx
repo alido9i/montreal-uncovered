@@ -5,6 +5,7 @@ import AdSlot from "@/components/AdSlot";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
+import DOMPurify from "isomorphic-dompurify";
 import { db } from "@/lib/db";
 import { calculateReadingTime } from "@/lib/readingTime";
 import { notFound } from "next/navigation";
@@ -45,6 +46,7 @@ export default async function ArticlePage({ params }: Props) {
       content: true,
       excerpt: true,
       imageUrl: true,
+      imageCredit: true,
       publishedAt: true,
       views: true,
       category: { select: { name: true, slug: true } },
@@ -203,16 +205,29 @@ export default async function ArticlePage({ params }: Props) {
 
         {/* Hero image */}
         {article.imageUrl ? (
-          <div className="w-full aspect-video relative mb-8 overflow-hidden bg-gray-100">
-            <Image
-              src={article.imageUrl}
-              alt={article.title}
-              fill
-              className="object-cover"
-              sizes="(max-width: 768px) 100vw, 768px"
-              priority
-            />
-          </div>
+          <figure className="mb-8">
+            <div className="w-full aspect-video relative overflow-hidden bg-gray-100">
+              <Image
+                src={article.imageUrl}
+                alt={article.title}
+                fill
+                className="object-cover"
+                sizes="(max-width: 768px) 100vw, 768px"
+                priority
+              />
+            </div>
+            {article.imageCredit && (
+              <figcaption
+                className="text-xs text-gray-400 mt-2 italic [&_a]:underline [&_a]:hover:text-[#FF0033] [&_a]:transition-colors"
+                dangerouslySetInnerHTML={{
+                  __html: DOMPurify.sanitize(article.imageCredit, {
+                    ALLOWED_TAGS: ["a", "em", "strong", "span"],
+                    ALLOWED_ATTR: ["href", "rel", "target", "class", "title"],
+                  }),
+                }}
+              />
+            )}
+          </figure>
         ) : (
           <div className="w-full aspect-video bg-gray-100 mb-8 flex items-center justify-center">
             <span className="text-gray-400 font-black text-3xl">MTL</span>

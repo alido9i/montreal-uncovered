@@ -22,6 +22,7 @@ export default function NewArticlePage() {
   const [excerpt, setExcerpt] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [imageCredit, setImageCredit] = useState("");
   const [published, setPublished] = useState(false);
 
   useEffect(() => {
@@ -41,7 +42,7 @@ export default function NewArticlePage() {
     const res = await fetch("/api/dashboard/articles", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, content, excerpt, categoryId, imageUrl, published }),
+      body: JSON.stringify({ title, content, excerpt, categoryId, imageUrl, imageCredit, published }),
     });
 
     if (!res.ok) {
@@ -136,6 +137,24 @@ export default function NewArticlePage() {
             placeholder="https://exemple.com/image.jpg"
             className="w-full border-2 border-gray-200 px-4 py-2.5 text-sm focus:outline-none focus:border-black"
           />
+        </div>
+
+        {/* Crédit photo */}
+        <div>
+          <label htmlFor="imageCredit" className="block text-sm font-bold mb-1">
+            Crédit photo <span className="text-gray-400 font-normal">(optionnel, HTML autorisé)</span>
+          </label>
+          <textarea
+            id="imageCredit"
+            rows={2}
+            value={imageCredit}
+            onChange={(e) => setImageCredit(e.target.value)}
+            placeholder='Par <a href="https://..." rel="nofollow">Photographe</a>, CC BY 2.0'
+            className="w-full border-2 border-gray-200 px-4 py-2.5 text-xs font-mono focus:outline-none focus:border-black resize-none"
+          />
+          <p className="text-xs text-gray-400 mt-1">
+            Colle ici le HTML d&apos;attribution fourni par Wikimedia / Flickr / Unsplash.
+          </p>
         </div>
 
         {/* Contenu */}

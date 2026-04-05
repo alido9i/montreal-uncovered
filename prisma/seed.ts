@@ -393,6 +393,7 @@ Consultez les programmations sur les réseaux sociaux plutôt que sur les sites 
       slug: "10-meilleures-poutines-montreal-guide-definitif",
       excerpt: "On a mangé 47 poutines en 30 jours. Nos artères nous détestent, mais voici le classement que vous attendiez.",
       imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/La_Banquise_Poutine.jpg/960px-La_Banquise_Poutine.jpg",
+      imageCredit: `Par <a rel="nofollow" href="https://www.flickr.com/people/7845551@N05">Yuri Long</a> from Arlington, VA, USA — <a rel="nofollow" href="https://www.flickr.com/photos/yurilong/4917518173/">road_trip-9349.jpg</a>, <a href="https://creativecommons.org/licenses/by/2.0" title="Creative Commons Attribution 2.0">CC BY 2.0</a>, via <a href="https://commons.wikimedia.org/w/index.php?curid=19029778">Wikimedia Commons</a>`,
       content: `La poutine est l'âme culinaire de Montréal. Mais toutes les poutines ne se valent pas. Après un mois d'investigation intensive (et quelques kilos en plus), voici notre classement définitif.
 
 ## Le Top 10

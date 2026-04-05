@@ -26,6 +26,7 @@ export default function EditArticlePage() {
   const [excerpt, setExcerpt] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [imageUrl, setImageUrl] = useState("");
+  const [imageCredit, setImageCredit] = useState("");
   const [published, setPublished] = useState(false);
   const [slug, setSlug] = useState("");
   const [views, setViews] = useState(0);
@@ -42,6 +43,7 @@ export default function EditArticlePage() {
         setExcerpt(article.excerpt ?? "");
         setCategoryId(article.categoryId);
         setImageUrl(article.imageUrl ?? "");
+        setImageCredit(article.imageCredit ?? "");
         setPublished(article.published);
         setSlug(article.slug);
         setViews(article.views ?? 0);
@@ -58,7 +60,7 @@ export default function EditArticlePage() {
     const res = await fetch(`/api/dashboard/articles/${articleId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, content, excerpt, categoryId, imageUrl, published }),
+      body: JSON.stringify({ title, content, excerpt, categoryId, imageUrl, imageCredit, published }),
     });
 
     if (!res.ok) {
@@ -218,6 +220,23 @@ export default function EditArticlePage() {
                 <img src={imageUrl} alt="Aperçu" className="w-full h-full object-cover" />
               </div>
             )}
+
+            {/* Crédit photo */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-1">
+                Crédit photo
+              </label>
+              <textarea
+                rows={2}
+                value={imageCredit}
+                onChange={(e) => setImageCredit(e.target.value)}
+                placeholder='Par <a href="...">Nom</a>, CC BY 2.0'
+                className="w-full border border-gray-200 rounded px-3 py-2 text-xs font-mono focus:outline-none focus:border-black resize-none"
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                HTML autorisé (liens photographe + licence).
+              </p>
+            </div>
           </div>
         </div>
       </form>
