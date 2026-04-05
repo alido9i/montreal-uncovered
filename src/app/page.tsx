@@ -121,6 +121,17 @@ export default async function HomePage() {
               <ScrollReveal direction="right" delay={0.2}>
                 <WeekendAgenda />
               </ScrollReveal>
+
+              {/* Pub carrée sidebar — même largeur que Trending + Weekend */}
+              <ScrollReveal direction="right" delay={0.3}>
+                <AdSlot
+                  slot="6666666666"
+                  format="rectangle"
+                  responsive={false}
+                  style={{ display: "block", width: "100%", minHeight: 280 }}
+                  className="my-0"
+                />
+              </ScrollReveal>
             </div>
           </div>
         </section>
