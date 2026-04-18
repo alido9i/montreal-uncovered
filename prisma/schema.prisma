@@ -127,4 +127,18 @@ model SavedArticle {
   @@unique([userId, articleId])
 }
 
+model WeekendEvent {
+  id        String   @id @default(cuid())
+  title     String
+  date      String
+  location  String
+  type      String   // "festival" | "politique" | "culture" | "gastro" | "sport"
+  href      String?
+  source    String?  // "tourisme-montreal" | "mtl-blog" | "manual"
+  weekOf    DateTime // le lundi de la semaine concernée
+  createdAt DateTime @default(now())
+
+  @@index([weekOf])
+}
+
 // Roles: "USER" | "ADMIN"
