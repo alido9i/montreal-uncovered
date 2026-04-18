@@ -35,7 +35,7 @@ export default function Header() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const searchContainerRef = useRef<HTMLDivElement>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   const fetchSuggestions = useCallback((query: string) => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -188,13 +188,16 @@ export default function Header() {
                     onFocus={() => {
                       if (suggestions.length > 0) setShowSuggestions(true);
                     }}
-                    onBlur={() => {
+                    onBlur={(e) => {
+                      // Ne pas fermer si le clic cible est dans le conteneur de recherche (dropdown de suggestions)
+                      const relatedTarget = e.relatedTarget as Node | null;
+                      if (searchContainerRef.current?.contains(relatedTarget)) return;
                       setTimeout(() => {
                         if (!searchQuery.trim()) {
                           setSearchOpen(false);
                           setShowSuggestions(false);
                         }
-                      }, 200);
+                      }, 300);
                     }}
                     onKeyDown={handleSearchKeyDown}
                     placeholder="Rechercher…"
