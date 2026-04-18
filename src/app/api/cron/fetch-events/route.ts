@@ -26,41 +26,42 @@ function classifyEvent(title: string, description: string = ""): string {
   return "culture"; // défaut
 }
 
-// Calcule le lundi de la semaine du prochain week-end
-function getNextWeekMonday(): Date {
+const DAYS = ["Dim.", "Lun.", "Mar.", "Mer.", "Jeu.", "Ven.", "Sam."];
+const MONTHS = [
+  "janv.", "févr.", "mars", "avr.", "mai", "juin",
+  "juil.", "août", "sept.", "oct.", "nov.", "déc.",
+];
+
+function formatEventDate(date: Date): string {
+  return `${DAYS[date.getDay()]} ${date.getDate()} ${MONTHS[date.getMonth()]}`;
+}
+
+/** Retourne le lundi de la semaine courante */
+function getCurrentMonday(): Date {
   const now = new Date();
-  const day = now.getDay(); // 0=dimanche, 4=jeudi
-  // On veut le lundi de la semaine courante (le cron roule le jeudi)
+  const day = now.getDay();
   const monday = new Date(now);
   monday.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
   monday.setHours(0, 0, 0, 0);
   return monday;
 }
 
-// Formate une date pour l'affichage
-function formatEventDate(date: Date): string {
-  const days = ["Dim.", "Lun.", "Mar.", "Mer.", "Jeu.", "Ven.", "Sam."];
-  const months = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
-  return `${days[date.getDay()]} ${date.getDate()} ${months[date.getMonth()]}`;
+/** Retourne les 7 jours de la semaine (lun-dim) */
+function getWeekDates(monday: Date): Date[] {
+  const dates: Date[] = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    dates.push(d);
+  }
+  return dates;
 }
 
-// Scrape les événements depuis Tourisme Montréal (page événements)
-async function fetchTourismeMontreal(): Promise<ScrapedEvent[]> {
+// Scrape les événements depuis Tourisme Montréal
+async function fetchTourismeMontreal(weekDates: Date[]): Promise<ScrapedEvent[]> {
   const events: ScrapedEvent[] = [];
 
   try {
-    const now = new Date();
-    // Calculer samedi et dimanche prochains
-    const daysUntilSaturday = (6 - now.getDay() + 7) % 7 || 7;
-    const saturday = new Date(now);
-    saturday.setDate(now.getDate() + daysUntilSaturday);
-    const sunday = new Date(saturday);
-    sunday.setDate(saturday.getDate() + 1);
-
-    const satStr = formatEventDate(saturday);
-    const sunStr = formatEventDate(sunday);
-
-    // Essayer de récupérer la page des événements
     const res = await fetch("https://www.mtl.org/fr/quoi-faire/evenements", {
       headers: {
         "User-Agent":
@@ -71,19 +72,19 @@ async function fetchTourismeMontreal(): Promise<ScrapedEvent[]> {
 
     if (res.ok) {
       const html = await res.text();
-
-      // Extraire les titres d'événements depuis le HTML
       const eventRegex =
         /<h[23][^>]*class="[^"]*card[^"]*"[^>]*>([^<]+)<\/h[23]>/gi;
       let match;
       let count = 0;
 
-      while ((match = eventRegex.exec(html)) !== null && count < 8) {
+      while ((match = eventRegex.exec(html)) !== null && count < 10) {
         const title = match[1].trim();
         if (title.length > 5 && title.length < 200) {
+          // Distribuer les événements sur toute la semaine
+          const dayIndex = count % 7;
           events.push({
             title,
-            date: count < 4 ? satStr : sunStr,
+            date: formatEventDate(weekDates[dayIndex]),
             location: "Montréal",
             type: classifyEvent(title),
             source: "tourisme-montreal",
@@ -93,14 +94,14 @@ async function fetchTourismeMontreal(): Promise<ScrapedEvent[]> {
       }
     }
   } catch (e) {
-    console.error("Erreur Tourisme Montréal:", e);
+    console.error("[CRON] Erreur Tourisme Montréal:", e);
   }
 
   return events;
 }
 
 // Scrape MTL Blog événements
-async function fetchMtlBlog(): Promise<ScrapedEvent[]> {
+async function fetchMtlBlog(weekDates: Date[]): Promise<ScrapedEvent[]> {
   const events: ScrapedEvent[] = [];
 
   try {
@@ -117,40 +118,27 @@ async function fetchMtlBlog(): Promise<ScrapedEvent[]> {
 
     if (res.ok) {
       const html = await res.text();
-
-      // Chercher les titres d'événements dans l'article
-      const titleRegex =
-        /<h[23][^>]*>([^<]{10,150})<\/h[23]>/gi;
+      const titleRegex = /<h[23][^>]*>([^<]{10,150})<\/h[23]>/gi;
       let match;
       let count = 0;
 
-      const now = new Date();
-      const daysUntilSaturday = (6 - now.getDay() + 7) % 7 || 7;
-      const saturday = new Date(now);
-      saturday.setDate(now.getDate() + daysUntilSaturday);
-      const sunday = new Date(saturday);
-      sunday.setDate(saturday.getDate() + 1);
-
-      while ((match = titleRegex.exec(html)) !== null && count < 6) {
+      while ((match = titleRegex.exec(html)) !== null && count < 8) {
         const title = match[1]
           .trim()
           .replace(/&amp;/g, "&")
           .replace(/&#x27;/g, "'")
           .replace(/&quot;/g, '"');
 
-        // Filtrer les titres qui ne sont clairement pas des événements
         if (
           title.length > 10 &&
           !title.match(
             /cookie|privacy|subscribe|newsletter|related|comment|share/i
           )
         ) {
+          const dayIndex = count % 7;
           events.push({
             title,
-            date:
-              count % 2 === 0
-                ? formatEventDate(saturday)
-                : formatEventDate(sunday),
+            date: formatEventDate(weekDates[dayIndex]),
             location: "Montréal",
             type: classifyEvent(title),
             source: "mtl-blog",
@@ -160,26 +148,20 @@ async function fetchMtlBlog(): Promise<ScrapedEvent[]> {
       }
     }
   } catch (e) {
-    console.error("Erreur MTL Blog:", e);
+    console.error("[CRON] Erreur MTL Blog:", e);
   }
 
   return events;
 }
 
 // Événements de secours si le scraping échoue (basés sur la saison)
-function getFallbackEvents(): ScrapedEvent[] {
-  const now = new Date();
-  const month = now.getMonth(); // 0-11
-  const daysUntilSaturday = (6 - now.getDay() + 7) % 7 || 7;
-  const saturday = new Date(now);
-  saturday.setDate(now.getDate() + daysUntilSaturday);
-  const sunday = new Date(saturday);
-  sunday.setDate(saturday.getDate() + 1);
+function getFallbackEvents(weekDates: Date[]): ScrapedEvent[] {
+  const month = weekDates[0].getMonth(); // 0-11
+  const monStr = formatEventDate(weekDates[0]);
+  const friStr = formatEventDate(weekDates[4]);
+  const satStr = formatEventDate(weekDates[5]);
+  const sunStr = formatEventDate(weekDates[6]);
 
-  const satStr = formatEventDate(saturday);
-  const sunStr = formatEventDate(sunday);
-
-  // Événements récurrents basés sur la saison
   const seasonal: ScrapedEvent[] = [];
 
   // Toute l'année
@@ -190,6 +172,15 @@ function getFallbackEvents(): ScrapedEvent[] {
     type: "gastro",
     source: "fallback",
     href: "https://www.marchespublics-mtl.com/marches/jean-talon/",
+  });
+
+  seasonal.push({
+    title: "Musées montréalais — Expositions en cours",
+    date: `${monStr} au ${sunStr}`,
+    location: "Divers musées",
+    type: "culture",
+    source: "fallback",
+    href: "https://www.mtl.org/fr/quoi-faire/musees",
   });
 
   if (month >= 4 && month <= 9) {
@@ -203,8 +194,8 @@ function getFallbackEvents(): ScrapedEvent[] {
         source: "fallback",
       },
       {
-        title: "BIXI — Balades du week-end",
-        date: `${satStr} & ${sunStr}`,
+        title: "BIXI — Balades de la semaine",
+        date: `${monStr} au ${sunStr}`,
         location: "Partout à Montréal",
         type: "sport",
         source: "fallback",
@@ -216,7 +207,7 @@ function getFallbackEvents(): ScrapedEvent[] {
     // Juin-juillet — saison des festivals
     seasonal.push({
       title: "Saison des festivals — Quartier des spectacles",
-      date: `${satStr} & ${sunStr}`,
+      date: `${friStr} au ${sunStr}`,
       location: "Quartier des spectacles",
       type: "festival",
       source: "fallback",
@@ -235,7 +226,7 @@ function getFallbackEvents(): ScrapedEvent[] {
       },
       {
         title: "RÉSO — Escapade souterraine",
-        date: `${satStr} & ${sunStr}`,
+        date: `${monStr} au ${sunStr}`,
         location: "Ville souterraine",
         type: "culture",
         source: "fallback",
@@ -254,17 +245,16 @@ function getFallbackEvents(): ScrapedEvent[] {
     });
   }
 
-  // Toujours ajouter un événement culture
+  // 5 à 7 en semaine
   seasonal.push({
-    title: "Musées montréalais — Expositions en cours",
-    date: `${satStr} & ${sunStr}`,
-    location: "Divers musées",
+    title: "5 à 7 culturel du Vieux-Port",
+    date: formatEventDate(weekDates[3]),
+    location: "Vieux-Port de Montréal",
     type: "culture",
     source: "fallback",
-    href: "https://www.mtl.org/fr/quoi-faire/musees",
   });
 
-  return seasonal.slice(0, 5);
+  return seasonal.slice(0, 7);
 }
 
 export async function GET(request: NextRequest) {
@@ -277,12 +267,13 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const weekOf = getNextWeekMonday();
+    const weekOf = getCurrentMonday();
+    const weekDates = getWeekDates(weekOf);
 
     // Scraper les deux sources en parallèle
     const [tourismEvents, mtlBlogEvents] = await Promise.all([
-      fetchTourismeMontreal(),
-      fetchMtlBlog(),
+      fetchTourismeMontreal(weekDates),
+      fetchMtlBlog(weekDates),
     ]);
 
     // Combiner et dédupliquer
@@ -297,9 +288,8 @@ export async function GET(request: NextRequest) {
       return true;
     });
 
-    // Limiter à 5 événements, bien répartis par type
-    if (allEvents.length > 5) {
-      // Essayer d'avoir une variété de types
+    // Limiter à 7 événements, bien répartis par type
+    if (allEvents.length > 7) {
       const byType = new Map<string, ScrapedEvent[]>();
       for (const e of allEvents) {
         const list = byType.get(e.type) || [];
@@ -310,14 +300,13 @@ export async function GET(request: NextRequest) {
       const selected: ScrapedEvent[] = [];
       const types = [...byType.keys()];
       let typeIdx = 0;
-      while (selected.length < 5 && allEvents.length > 0) {
+      while (selected.length < 7 && allEvents.length > 0) {
         const type = types[typeIdx % types.length];
         const list = byType.get(type);
         if (list && list.length > 0) {
           selected.push(list.shift()!);
         }
         typeIdx++;
-        // Sécurité anti-boucle infinie
         if (typeIdx > 50) break;
       }
       allEvents = selected;
@@ -325,8 +314,8 @@ export async function GET(request: NextRequest) {
 
     // Si pas assez d'événements scrapés, utiliser les fallbacks
     if (allEvents.length < 3) {
-      console.log("Pas assez d'événements scrapés, utilisation des fallbacks");
-      allEvents = getFallbackEvents();
+      console.log("[CRON] Pas assez d'événements scrapés, utilisation des fallbacks");
+      allEvents = getFallbackEvents(weekDates);
     }
 
     // Supprimer les anciens événements de cette semaine
@@ -353,10 +342,10 @@ export async function GET(request: NextRequest) {
       success: true,
       count: allEvents.length,
       weekOf: weekOf.toISOString(),
-      events: allEvents.map((e) => e.title),
+      events: allEvents.map((e) => `${e.date} — ${e.title}`),
     });
   } catch (error) {
-    console.error("Erreur cron fetch-events:", error);
+    console.error("[CRON] Erreur fetch-events:", error);
     return NextResponse.json(
       { error: "Erreur lors de la récupération des événements" },
       { status: 500 }
