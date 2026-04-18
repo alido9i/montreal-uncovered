@@ -1,11 +1,20 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useSession, signOut } from "next-auth/react";
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion";
 import DarkModeToggle from "./DarkModeToggle";
+
+interface SearchSuggestion {
+  title: string;
+  slug: string;
+  excerpt: string | null;
+  imageUrl: string | null;
+  category: { name: string };
+}
 
 const navLinks = [
   { label: "Montréal Local", href: "/montreal-local" },
@@ -22,15 +31,65 @@ export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(-1);
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>();
+
+  const fetchSuggestions = useCallback((query: string) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    if (query.trim().length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query.trim())}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSuggestions(data);
+          setShowSuggestions(data.length > 0);
+          setSelectedIndex(-1);
+        }
+      } catch {
+        setSuggestions([]);
+      }
+    }, 250);
+  }, []);
 
   function handleSearchSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const q = searchQuery.trim();
-    if (q.length < 2) return;
-    router.push(`/recherche?q=${encodeURIComponent(q)}`);
+    if (selectedIndex >= 0 && suggestions[selectedIndex]) {
+      router.push(`/article/${suggestions[selectedIndex].slug}`);
+    } else if (q.length >= 2) {
+      router.push(`/recherche?q=${encodeURIComponent(q)}`);
+    } else {
+      return;
+    }
     setSearchOpen(false);
     setSearchQuery("");
+    setSuggestions([]);
+    setShowSuggestions(false);
   }
+
+  function handleSearchKeyDown(e: React.KeyboardEvent) {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((prev) => Math.min(prev + 1, suggestions.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((prev) => Math.max(prev - 1, -1));
+    } else if (e.key === "Escape") {
+      setSearchOpen(false);
+      setSearchQuery("");
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  }
+
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [hidden, setHidden] = useState(false);
@@ -48,6 +107,9 @@ export default function Header() {
     function handleClick(e: MouseEvent) {
       if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
         setUserMenuOpen(false);
+      }
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target as Node)) {
+        setShowSuggestions(false);
       }
     }
     document.addEventListener("mousedown", handleClick);
@@ -102,56 +164,125 @@ export default function Header() {
         <div className="flex items-center gap-2">
 
           {/* Search */}
-          <AnimatePresence>
-            {searchOpen ? (
-              <motion.form
-                key="search"
-                onSubmit={handleSearchSubmit}
-                initial={{ width: 0, opacity: 0 }}
-                animate={{ width: 208, opacity: 1 }}
-                exit={{ width: 0, opacity: 0 }}
-                transition={{ duration: 0.3, ease: "easeInOut" }}
-                role="search"
-              >
-                <input
-                  autoFocus
-                  type="search"
-                  name="q"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onBlur={() => {
-                    // Laisse le submit se déclencher avant de fermer
-                    setTimeout(() => {
-                      if (!searchQuery.trim()) setSearchOpen(false);
-                    }, 150);
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") {
+          <div className="relative" ref={searchContainerRef}>
+            <AnimatePresence>
+              {searchOpen ? (
+                <motion.form
+                  key="search"
+                  onSubmit={handleSearchSubmit}
+                  initial={{ width: 0, opacity: 0 }}
+                  animate={{ width: 260, opacity: 1 }}
+                  exit={{ width: 0, opacity: 0 }}
+                  transition={{ duration: 0.3, ease: "easeInOut" }}
+                  role="search"
+                >
+                  <input
+                    autoFocus
+                    type="search"
+                    name="q"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      fetchSuggestions(e.target.value);
+                    }}
+                    onFocus={() => {
+                      if (suggestions.length > 0) setShowSuggestions(true);
+                    }}
+                    onBlur={() => {
+                      setTimeout(() => {
+                        if (!searchQuery.trim()) {
+                          setSearchOpen(false);
+                          setShowSuggestions(false);
+                        }
+                      }, 200);
+                    }}
+                    onKeyDown={handleSearchKeyDown}
+                    placeholder="Rechercher…"
+                    aria-label="Rechercher un article"
+                    autoComplete="off"
+                    className="w-full bg-white/10 backdrop-blur-sm text-white px-4 py-1.5 rounded-full text-sm outline-none border border-white/20 placeholder:text-gray-400 focus:border-[#FF0033] transition-colors"
+                  />
+                </motion.form>
+              ) : (
+                <motion.button
+                  key="search-btn"
+                  onClick={() => setSearchOpen(true)}
+                  aria-label="Rechercher"
+                  className="p-2 hover:text-[#FF0033] transition-colors"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                >
+                  <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="m21 21-4.35-4.35" />
+                  </svg>
+                </motion.button>
+              )}
+            </AnimatePresence>
+
+            {/* Suggestions dropdown */}
+            <AnimatePresence>
+              {showSuggestions && searchOpen && suggestions.length > 0 && (
+                <motion.div
+                  className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-900 shadow-2xl border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden z-[60]"
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -8 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {suggestions.map((s, i) => (
+                    <Link
+                      key={s.slug}
+                      href={`/article/${s.slug}`}
+                      onClick={() => {
+                        setSearchOpen(false);
+                        setSearchQuery("");
+                        setSuggestions([]);
+                        setShowSuggestions(false);
+                      }}
+                      className={`flex items-start gap-3 px-4 py-3 transition-colors ${
+                        i === selectedIndex
+                          ? "bg-gray-100 dark:bg-gray-800"
+                          : "hover:bg-gray-50 dark:hover:bg-gray-800/50"
+                      } ${i > 0 ? "border-t border-gray-100 dark:border-gray-800" : ""}`}
+                    >
+                      {s.imageUrl && (
+                        <div className="relative w-12 h-12 flex-shrink-0 rounded overflow-hidden bg-gray-100">
+                          <Image
+                            src={s.imageUrl}
+                            alt=""
+                            fill
+                            className="object-cover"
+                            sizes="48px"
+                          />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-[#FF0033]">
+                          {s.category.name}
+                        </span>
+                        <p className="text-sm font-bold text-gray-900 dark:text-white leading-snug line-clamp-2">
+                          {s.title}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                  <Link
+                    href={`/recherche?q=${encodeURIComponent(searchQuery.trim())}`}
+                    onClick={() => {
                       setSearchOpen(false);
                       setSearchQuery("");
-                    }
-                  }}
-                  placeholder="Rechercher…"
-                  aria-label="Rechercher un article"
-                  className="w-full bg-white/10 backdrop-blur-sm text-white px-4 py-1.5 rounded-full text-sm outline-none border border-white/20 placeholder:text-gray-400 focus:border-[#FF0033] transition-colors"
-                />
-              </motion.form>
-            ) : (
-              <motion.button
-                key="search-btn"
-                onClick={() => setSearchOpen(true)}
-                aria-label="Rechercher"
-                className="p-2 hover:text-[#FF0033] transition-colors"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.9 }}
-              >
-                <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                  <circle cx="11" cy="11" r="8" />
-                  <path d="m21 21-4.35-4.35" />
-                </svg>
-              </motion.button>
-            )}
-          </AnimatePresence>
+                      setSuggestions([]);
+                      setShowSuggestions(false);
+                    }}
+                    className="block px-4 py-2.5 text-xs font-bold text-center text-[#FF0033] bg-gray-50 dark:bg-gray-800/50 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors border-t border-gray-200 dark:border-gray-700"
+                  >
+                    Voir tous les résultats →
+                  </Link>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           {/* Dark mode */}
           <DarkModeToggle />
