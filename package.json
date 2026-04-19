@@ -23,14 +23,15 @@
     "@tiptap/pm": "^3.22.2",
     "@tiptap/react": "^3.22.2",
     "@tiptap/starter-kit": "^3.22.2",
+    "@types/sanitize-html": "^2.16.1",
     "bcryptjs": "^3.0.3",
     "framer-motion": "^12.38.0",
-    "isomorphic-dompurify": "^3.7.1",
     "next": "16.2.1",
     "next-auth": "^4.24.13",
     "prisma": "5.22.0",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "sanitize-html": "^2.17.3",
     "zod": "^4.3.6"
   },
   "devDependencies": {
