@@ -45,5 +45,6 @@ next-env.d.ts
 
 # Override Prisma local (SQLite) — dev uniquement, ne pas committer
 prisma/schema.local.prisma
+prisma/*.db
 prisma/dev.db.bak-*
 prisma/*.db-journal

@@ -3,6 +3,19 @@ import bcrypt from "bcryptjs";
 
 const db = new PrismaClient();
 
+// Les mots de passe des comptes de démo ne sont jamais écrits dans le code :
+// le dépôt est public, et un mot de passe commité est un mot de passe connu.
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(
+      `${name} manquant. Définis-le dans .env puis lance « npx prisma db seed », ` +
+        `ou passe-le directement : ${name}=... npm run db:seed`
+    );
+  }
+  return value;
+}
+
 async function main() {
   console.log("🌱 Début du seed...");
 
@@ -44,8 +57,8 @@ async function main() {
   console.log(`✓ ${categories.length} catégories créées`);
 
   // ── Utilisateurs ───────────────────────────────────────────────────
-  const adminPassword = await bcrypt.hash("admin1234", 12);
-  const userPassword = await bcrypt.hash("user1234", 12);
+  const adminPassword = await bcrypt.hash(requireEnv("SEED_ADMIN_PASSWORD"), 12);
+  const userPassword = await bcrypt.hash(requireEnv("SEED_USER_PASSWORD"), 12);
 
   const admin = await db.user.upsert({
     where: { email: "admin@montrealuncovered.com" },
@@ -1049,10 +1062,10 @@ Bienvenue chez vous.`,
   console.log(`   ${commentsCreated} commentaires`);
   console.log(`   4 utilisateurs`);
   console.log("\n🔑 Comptes de test :");
-  console.log("   Admin  → admin@montrealuncovered.com / admin1234");
-  console.log("   Admin  → sofia@montrealuncovered.com / admin1234");
-  console.log("   Admin  → marc@montrealuncovered.com / admin1234");
-  console.log("   Lecteur → lecteur@example.com / user1234");
+  console.log("   Admin  → admin@montrealuncovered.com (mot de passe : SEED_ADMIN_PASSWORD)");
+  console.log("   Admin  → sofia@montrealuncovered.com (mot de passe : SEED_ADMIN_PASSWORD)");
+  console.log("   Admin  → marc@montrealuncovered.com (mot de passe : SEED_ADMIN_PASSWORD)");
+  console.log("   Lecteur → lecteur@example.com (mot de passe : SEED_USER_PASSWORD)");
 }
 
 main()
