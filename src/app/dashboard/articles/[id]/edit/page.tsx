@@ -85,7 +85,7 @@ export default function EditArticlePage() {
     <div className="space-y-5">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-black">Modifier l'article</h1>
+          <h1 className="text-2xl font-black">Modifier l’article</h1>
           <div className="flex items-center gap-3 text-xs text-gray-400 mt-1">
             <span className="font-mono">/{slug}</span>
             <span>·</span>

@@ -54,7 +54,7 @@ export default function ArticleCard({
               variants={{ hover: { scale: 1.08 } }}
               transition={{ duration: 0.7, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-              <Image src={imageUrl} alt={title} fill className="object-cover" sizes={isLarge ? "70vw" : "35vw"} />
+              <Image src={imageUrl} alt={title} fill className="object-cover" sizes={isLarge ? "(max-width: 768px) 100vw, 70vw" : "(max-width: 768px) 100vw, 35vw"} />
             </motion.div>
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-gray-800 to-gray-950" />
@@ -122,7 +122,7 @@ export default function ArticleCard({
               variants={{ hover: { scale: 1.06 } }}
               transition={{ duration: 0.6, ease: [0.25, 0.46, 0.45, 0.94] }}
             >
-              <Image src={imageUrl} alt={title} fill className="object-cover" sizes={isLarge ? "100vw" : "(max-width: 768px) 100vw, 50vw"} />
+              <Image src={imageUrl} alt={title} fill className="object-cover" sizes={isLarge ? "(max-width: 768px) 100vw, (max-width: 1280px) 66vw, 800px" : "(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"} />
             </motion.div>
           ) : (
             <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">

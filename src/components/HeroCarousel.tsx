@@ -139,7 +139,7 @@ export default function HeroCarousel({ slides }: HeroCarouselProps) {
               href={`/article/${slide.slug}`}
               className="inline-flex items-center gap-2 text-sm font-black uppercase tracking-widest text-white border-b-2 border-[#FF0033] pb-1 hover:text-[#FF0033] transition-colors group"
             >
-              Lire l'article
+              Lire l’article
               <motion.svg
                 width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"
                 className="group-hover:translate-x-1 transition-transform"

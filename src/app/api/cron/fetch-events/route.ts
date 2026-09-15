@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 
-// Types d'événements supportés
-const EVENT_TYPES = ["festival", "culture", "gastro", "sport", "politique"] as const;
-
 interface ScrapedEvent {
   title: string;
   date: string;

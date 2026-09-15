@@ -70,7 +70,7 @@ export default function NewsletterForm({ dark = false }: NewsletterFormProps) {
               whileHover={{ scale: 1.02, backgroundColor: "#e6002e" }}
               whileTap={{ scale: 0.98 }}
             >
-              S'abonner
+              S’abonner
             </motion.button>
           </motion.form>
         )}

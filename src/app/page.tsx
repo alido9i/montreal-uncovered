@@ -240,7 +240,7 @@ export default async function HomePage() {
                 Montréal dans<br />votre boîte mail
               </h2>
               <p className="text-gray-400 mb-8 text-sm max-w-md mx-auto">
-                Choisissez ce qui vous intéresse. On s'occupe du reste.
+                Choisissez ce qui vous intéresse. On s’occupe du reste.
               </p>
               <NewsletterSegmented />
             </div>

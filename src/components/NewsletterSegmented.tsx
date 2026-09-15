@@ -113,7 +113,7 @@ export default function NewsletterSegmented() {
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
               >
-                S'abonner
+                S’abonner
               </motion.button>
             </div>
             <p className="text-[11px] text-gray-600 text-center">

@@ -39,13 +39,16 @@ export default function AdSlot({
   className = "",
 }: AdSlotProps) {
   const clientId = ADSENSE_CLIENT_ID;
-  const pushed = useRef(false);
+  const insRef = useRef<HTMLModElement>(null);
 
   useEffect(() => {
-    if (!clientId || pushed.current) return;
+    const el = insRef.current;
+    if (!clientId || !el) return;
+    // AdSense marque chaque <ins> rempli : on ne repousse jamais un slot déjà servi
+    // (remount Fast Refresh, StrictMode, retour arrière de navigation).
+    if (el.getAttribute("data-adsbygoogle-status")) return;
     try {
       (window.adsbygoogle = window.adsbygoogle || []).push({});
-      pushed.current = true;
     } catch (err) {
       console.error("[AdSense]", err);
     }
@@ -68,6 +71,7 @@ export default function AdSlot({
         Publicité
       </p>
       <ins
+        ref={insRef}
         className="adsbygoogle"
         style={{ display: "block", ...style }}
         data-ad-client={clientId}

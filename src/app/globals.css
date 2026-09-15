@@ -1,5 +1,10 @@
 @import "tailwindcss";
 
+/* Le thème est piloté par la classe .dark sur <html> (toggle utilisateur),
+   pas par prefers-color-scheme : sans ça les utilitaires dark: de Tailwind v4
+   suivraient l’OS et ignoreraient le bouton. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
   --foreground: #000000;

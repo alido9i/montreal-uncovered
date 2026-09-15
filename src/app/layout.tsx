@@ -47,8 +47,19 @@ export default function RootLayout({
     <html
       lang="fr"
       className={`${geistSans.variable} ${merriweather.variable} h-full antialiased`}
+      data-scroll-behavior="smooth"
       suppressHydrationWarning
     >
+      <head>
+        {/* Applique le thème avant le premier paint : évite le flash de clair
+            au chargement et garantit que les utilitaires dark: sont corrects
+            dès le rendu initial. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var t=localStorage.getItem("mtl-theme");if(t==="dark"||(!t&&matchMedia("(prefers-color-scheme: dark)").matches)){document.documentElement.classList.add("dark")}}catch(e){}`,
+          }}
+        />
+      </head>
       <body className="min-h-full flex flex-col bg-[var(--background)] text-[var(--foreground)]">
         <SessionProvider>
           <ThemeProvider>
