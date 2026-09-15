@@ -5,7 +5,7 @@ import AdSlot from "@/components/AdSlot";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
-import DOMPurify from "isomorphic-dompurify";
+import sanitizeHtml from "sanitize-html";
 import { db } from "@/lib/db";
 import { calculateReadingTime } from "@/lib/readingTime";
 import { notFound } from "next/navigation";
@@ -220,9 +220,14 @@ export default async function ArticlePage({ params }: Props) {
               <figcaption
                 className="text-xs text-gray-400 mt-2 italic [&_a]:underline [&_a]:hover:text-[#FF0033] [&_a]:transition-colors"
                 dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(article.imageCredit, {
-                    ALLOWED_TAGS: ["a", "em", "strong", "span"],
-                    ALLOWED_ATTR: ["href", "rel", "target", "class", "title"],
+                  __html: sanitizeHtml(article.imageCredit, {
+                    allowedTags: ["a", "em", "strong", "span"],
+                    allowedAttributes: {
+                      a: ["href", "rel", "target", "title", "class"],
+                      em: ["class"],
+                      strong: ["class"],
+                      span: ["class"],
+                    },
                   }),
                 }}
               />
