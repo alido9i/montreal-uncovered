@@ -6,7 +6,7 @@ export default function Footer() {
   return (
     <footer className="bg-black text-white mt-auto">
       <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
           {/* Brand */}
           <div className="md:col-span-1">
             <p className="text-2xl font-black mb-3">
@@ -31,27 +31,6 @@ export default function Footer() {
                 ["Société", "/societe"],
                 ["Style de vie", "/style-de-vie"],
                 ["Ailleurs", "/ailleurs"],
-              ].map(([label, href]) => (
-                <li key={href}>
-                  <Link href={href} className="text-sm text-gray-400 hover:text-[#FF0033] transition-colors">
-                    {label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Company */}
-          <div>
-            <h3 className="font-bold uppercase tracking-widest text-xs text-gray-500 mb-4">
-              MTL Uncovered
-            </h3>
-            <ul className="space-y-2">
-              {[
-                ["À propos", "/a-propos"],
-                ["Contact", "/contact"],
-                ["Publicité", "/publicite"],
-                ["Carrières", "/carrieres"],
               ].map(([label, href]) => (
                 <li key={href}>
                   <Link href={href} className="text-sm text-gray-400 hover:text-[#FF0033] transition-colors">
@@ -89,11 +68,6 @@ export default function Footer() {
 
         <div className="border-t border-gray-800 pt-6 flex flex-col md:flex-row justify-between items-center gap-4 text-xs text-gray-600">
           <p>© {new Date().getFullYear()} Montréal Uncovered. Tous droits réservés.</p>
-          <div className="flex gap-4">
-            <Link href="/confidentialite" className="hover:text-white transition-colors">Confidentialité</Link>
-            <Link href="/conditions" className="hover:text-white transition-colors">Conditions</Link>
-            <Link href="/contact" className="hover:text-white transition-colors">Contact</Link>
-          </div>
         </div>
       </div>
     </footer>

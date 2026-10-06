@@ -23,6 +23,7 @@ const navLinks = [
   { label: "Société", href: "/societe" },
   { label: "Style de vie", href: "/style-de-vie" },
   { label: "Ailleurs", href: "/ailleurs" },
+  { label: "Élections", href: "/elections" },
 ];
 
 export default function Header() {

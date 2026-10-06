@@ -1,3 +1,4 @@
+import Link from "next/link";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import CategoryNav from "@/components/CategoryNav";
@@ -79,6 +80,20 @@ export default async function HomePage() {
     <>
       <Header />
       <CategoryNav />
+
+      <Link
+        href="/elections"
+        className="block bg-[#FF0033] text-white hover:bg-black transition-colors"
+      >
+        <div className="max-w-7xl mx-auto px-4 py-3 flex items-center gap-3 text-sm font-bold uppercase tracking-wide">
+          <span className="relative flex h-2.5 w-2.5 shrink-0">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-white opacity-75 animate-ping" />
+            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-white" />
+          </span>
+          <span>En direct : résultats des élections québécoises 2026</span>
+          <span aria-hidden className="ml-auto">→</span>
+        </div>
+      </Link>
 
       <main className="flex-1">
 

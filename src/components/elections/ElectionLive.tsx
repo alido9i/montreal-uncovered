@@ -57,6 +57,7 @@ const partiInfo = (n: number, abrev?: string) =>
 
 const CHEFS = ["fréchette", "milliard", "plamondon", "duhaime", "ghazal"];
 const fmt = (n: number) => n.toLocaleString("fr-CA");
+const pct = (n: number) => n.toLocaleString("fr-CA", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
 
 function lead(c: Circ) {
   const s = [...c.candidats].sort((a, b) => b.nbVoteTotal - a.nbVoteTotal);
@@ -140,7 +141,7 @@ export default function ElectionLive() {
         </h1>
         <p className="mt-3 text-sm text-[var(--muted)]">
           {s && maj
-            ? `${s.tauxBureauVoteRempli.toFixed(1)} % des bureaux de vote dépouillés (${fmt(s.nbBureauVoteRempli)} sur ${fmt(s.nbBureauVote)}) · Participation : ${Number(s.tauxParticipationTotal).toFixed(1)} % · Mis à jour à ${maj.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
+            ? `${pct(s.tauxBureauVoteRempli)} % des bureaux de vote dépouillés (${fmt(s.nbBureauVoteRempli)} sur ${fmt(s.nbBureauVote)}) · Participation : ${pct(Number(s.tauxParticipationTotal))} % · Mis à jour à ${maj.toLocaleTimeString("fr-CA", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}`
             : error
               ? "Résultats momentanément indisponibles. Nouvelle tentative en cours…"
               : "Chargement des résultats…"}
@@ -205,7 +206,7 @@ export default function ElectionLive() {
                     <p className="text-xs font-black uppercase tracking-widest" style={{ color: i.color }}>
                       {i.label}
                     </p>
-                    <p className="mt-1 text-3xl font-black">{p.tauxVoteTotal.toFixed(1)} %</p>
+                    <p className="mt-1 text-3xl font-black">{pct(p.tauxVoteTotal)} %</p>
                     <p className="text-xs text-[var(--muted)]">
                       {fmt(p.nbVoteTotal)} votes · {p.nbCirconscriptionsEnAvance} en avance
                     </p>
@@ -284,7 +285,7 @@ export default function ElectionLive() {
                             <span className={`flex-1 truncate ${idx === 0 && !waiting ? "font-bold" : ""}`}>
                               {k.prenom} {k.nom}
                             </span>
-                            <span className="tabular-nums">{waiting ? "–" : `${k.tauxVote.toFixed(1)} %`}</span>
+                            <span className="tabular-nums">{waiting ? "–" : `${pct(k.tauxVote)} %`}</span>
                           </li>
                         );
                       })}
