@@ -20,7 +20,13 @@ const merriweather = Merriweather({
   display: "swap",
 });
 
+// URL absolue des images de partage (og:image). Sur Vercel, suit le domaine de production.
+const siteUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+  : "http://localhost:3000";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: {
     default: "Montréal Uncovered",
     template: "%s | Montréal Uncovered",

@@ -11,8 +11,15 @@ export const metadata: Metadata = {
     title: "Élections Québec 2026 : résultats en direct",
     description:
       "Sièges, vote populaire et résultats par circonscription, mis à jour en continu.",
+    url: "/elections",
+    siteName: "Montréal Uncovered",
     type: "website",
     locale: "fr_CA",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Élections Québec 2026 : résultats en direct",
+    description: "Sièges, vote populaire et résultats par circonscription, mis à jour en continu.",
   },
 };
 
