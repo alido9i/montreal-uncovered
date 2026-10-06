@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Candidat = {
@@ -44,16 +45,55 @@ type Stats = {
 type Data = { statistiques: Stats; circonscriptions: Circ[] };
 
 // numeroPartiPolitique -> libellé court + couleur
-const PARTIS: Record<number, { label: string; color: string }> = {
-  8: { label: "PQ", color: "#0A4DA2" },
-  6: { label: "PLQ", color: "#D71920" },
-  27: { label: "CAQ", color: "#00A9CE" },
-  22: { label: "PCQ", color: "#5A4FCF" },
-  40: { label: "QS", color: "#FF5505" },
+type Chef = { nom: string; photo: string; credit: string; licence: string; source: string };
+const PARTIS: Record<number, { label: string; nom: string; color: string; chef?: Chef }> = {
+  8: {
+    label: "PQ", nom: "Parti québécois", color: "#0A4DA2",
+    chef: { nom: "Paul St-Pierre Plamondon", photo: "/images/elections/pq.jpg", credit: "UnPingouin", licence: "CC BY-SA 4.0", source: "https://commons.wikimedia.org/wiki/File:Paul.St-Pierre.Plamondon.cropped.jpg" },
+  },
+  6: {
+    label: "PLQ", nom: "Parti libéral du Québec", color: "#D71920",
+    chef: { nom: "Charles Milliard", photo: "/images/elections/plq.jpg", credit: "Amélie Caron", licence: "CC BY-SA 4.0", source: "https://commons.wikimedia.org/wiki/File:A9306522-Modifier-30_(cropped).jpg" },
+  },
+  22: {
+    label: "PCQ", nom: "Parti conservateur du Québec", color: "#5A4FCF",
+    chef: { nom: "Éric Duhaime", photo: "/images/elections/pcq.jpg", credit: "Asclepias", licence: "CC BY-SA 3.0", source: "https://commons.wikimedia.org/wiki/File:%C3%89ric_Duhaime_2022-07-05_(cropped).jpg" },
+  },
+  40: {
+    label: "QS", nom: "Québec solidaire", color: "#FF5505",
+    chef: { nom: "Ruba Ghazal", photo: "/images/elections/qs.jpg", credit: "QuebecSolidaireMercier", licence: "CC BY-SA 4.0", source: "https://commons.wikimedia.org/wiki/File:RubaGhazal_2.jpg" },
+  },
+  27: {
+    label: "CAQ", nom: "Coalition avenir Québec", color: "#00A9CE",
+    chef: { nom: "Christine Fréchette", photo: "/images/elections/caq.jpg", credit: "TVA Nouvelles", licence: "CC BY 3.0", source: "https://commons.wikimedia.org/wiki/File:Christine_Fr%C3%A9chette_2024.jpg" },
+  },
 };
-const AUTRE = { label: "Autres", color: "#9ca3af" };
+const AUTRE: { label: string; nom: string; color: string; chef?: Chef } = { label: "Autres", nom: "Autres", color: "#9ca3af" };
 const partiInfo = (n: number, abrev?: string) =>
   PARTIS[n] ?? { ...AUTRE, label: abrev && abrev.length < 8 ? abrev : "Autres" };
+
+const norm = (t: string) => t.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+// Photo libre de droits seulement pour les chefs ; initiales pour les autres candidats.
+function photoDe(k: Candidat) {
+  const chef = PARTIS[k.numeroPartiPolitique]?.chef;
+  return chef && norm(chef.nom) === norm(`${k.prenom} ${k.nom}`) ? chef.photo : undefined;
+}
+
+function Avatar({ photo, nom, color, size }: { photo?: string; nom: string; color: string; size: number }) {
+  const initiales = nom.split(/[\s-]+/).filter(Boolean).map((m) => m[0]).slice(0, 2).join("").toUpperCase();
+  return (
+    <span
+      className="relative inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full font-black text-white"
+      style={{ width: size, height: size, background: color, boxShadow: `0 0 0 2px ${color}`, fontSize: size * 0.36 }}
+    >
+      {photo ? (
+        <Image src={photo} alt={nom} width={size * 2} height={size * 2} className="h-full w-full object-cover object-top" />
+      ) : (
+        initiales
+      )}
+    </span>
+  );
+}
 
 const CHEFS = ["fréchette", "milliard", "plamondon", "duhaime", "ghazal"];
 const fmt = (n: number) => n.toLocaleString("fr-CA");
@@ -89,12 +129,15 @@ export default function ElectionLive() {
     return () => clearInterval(id);
   }, [load]);
 
-  const { seats, total, majority } = useMemo(() => {
+  const { seats, partis, total, majority } = useMemo(() => {
     const total = data?.statistiques.nbCirconscription ?? 127;
     const seats = (data?.statistiques.partisPolitiques ?? [])
       .filter((p) => p.nbCirconscriptionsEnAvance > 0)
       .sort((a, b) => b.nbCirconscriptionsEnAvance - a.nbCirconscriptionsEnAvance);
-    return { seats, total, majority: Math.floor(total / 2) + 1 };
+    const partis = (data?.statistiques.partisPolitiques ?? [])
+      .filter((p) => PARTIS[p.numeroPartiPolitique])
+      .sort((a, b) => b.nbCirconscriptionsEnAvance - a.nbCirconscriptionsEnAvance || b.nbVoteTotal - a.nbVoteTotal);
+    return { seats, partis, total, majority: Math.floor(total / 2) + 1 };
   }, [data]);
 
   const rows = useMemo(() => {
@@ -155,6 +198,51 @@ export default function ElectionLive() {
 
       {s && (
         <>
+          <section className="-mx-4 mt-4 overflow-x-auto px-4 pb-2 pt-3 md:mx-0 md:overflow-visible md:px-0">
+            <div className="flex gap-3 md:grid md:grid-cols-5">
+              {partis.map((p, idx) => {
+                const i = partiInfo(p.numeroPartiPolitique, p.abreviationPartiPolitique);
+                const premier = idx === 0 && p.nbCirconscriptionsEnAvance > 0;
+                return (
+                  <div
+                    key={p.numeroPartiPolitique}
+                    className={`relative flex w-[176px] shrink-0 flex-col border bg-[var(--surface)] p-4 md:w-auto ${premier ? "border-2" : "border-[var(--border)]"}`}
+                    style={premier ? { borderColor: i.color } : undefined}
+                  >
+                    {premier && (
+                      <span
+                        className="absolute -top-2.5 left-3 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white"
+                        style={{ background: i.color }}
+                      >
+                        En tête
+                      </span>
+                    )}
+                    <p className="min-h-[2.5em] text-[11px] font-black uppercase leading-tight tracking-widest" style={{ color: i.color }}>
+                      {i.nom}
+                    </p>
+                    <div className="mt-3 flex items-center justify-between gap-2">
+                      <Avatar photo={i.chef?.photo} nom={i.chef?.nom ?? i.label} color={i.color} size={56} />
+                      <span className="text-4xl font-black tabular-nums leading-none lg:text-5xl">{p.nbCirconscriptionsEnAvance}</span>
+                    </div>
+                    <p className="mt-2 truncate text-xs font-bold">{i.chef?.nom}</p>
+                    <p className="text-xs text-[var(--muted)]">{p.nbCirconscriptionsEnAvance} en avance</p>
+                    <div className="relative mt-3 h-2 w-full bg-[var(--surface-2)]">
+                      <div
+                        className="h-full"
+                        style={{ width: `${Math.min(100, (p.nbCirconscriptionsEnAvance / majority) * 100)}%`, background: i.color }}
+                      />
+                      <span className="absolute -top-1 right-0 h-4 w-0.5 bg-black dark:bg-white" title={`Majorité : ${majority}`} />
+                    </div>
+                    <div className="mt-3 border-t border-[var(--border)] pt-2">
+                      <span className="block whitespace-nowrap text-xl font-black tabular-nums">{pct(p.tauxVoteTotal)} %</span>
+                      <span className="block whitespace-nowrap text-[11px] tabular-nums text-[var(--muted)]">{fmt(p.nbVoteTotal)} votes</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
           <section className="mt-8">
             <div className="mb-2 flex items-end justify-between">
               <h2 className="border-l-4 border-l-[#FF0033] pl-3 text-xl font-black uppercase tracking-tight">
@@ -188,32 +276,6 @@ export default function ElectionLive() {
               « En avance » : le parti mène dans la circonscription d&apos;après les bureaux déjà dépouillés. Ce n&apos;est
               pas une élection confirmée tant que les résultats ne sont pas finaux.
             </p>
-          </section>
-
-          <section className="mt-8">
-            <h2 className="mb-3 border-l-4 border-l-[#FF0033] pl-3 text-xl font-black uppercase tracking-tight">
-              Vote populaire
-            </h2>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-              {s.partisPolitiques.slice(0, 5).map((p) => {
-                const i = partiInfo(p.numeroPartiPolitique, p.abreviationPartiPolitique);
-                return (
-                  <div
-                    key={p.numeroPartiPolitique}
-                    className="border border-[var(--border)] bg-[var(--surface)] p-3"
-                    style={{ borderTop: `4px solid ${i.color}` }}
-                  >
-                    <p className="text-xs font-black uppercase tracking-widest" style={{ color: i.color }}>
-                      {i.label}
-                    </p>
-                    <p className="mt-1 text-3xl font-black">{pct(p.tauxVoteTotal)} %</p>
-                    <p className="text-xs text-[var(--muted)]">
-                      {fmt(p.nbVoteTotal)} votes · {p.nbCirconscriptionsEnAvance} en avance
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
           </section>
 
           <section className="mt-10">
@@ -254,42 +316,70 @@ export default function ElectionLive() {
               commencé à rapporter. {filter === "close" && "Écart de moins de 5 % entre les deux premiers."}
             </p>
 
-            <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {rows.map(({ c, l }) => {
                 const top = [...c.candidats].sort((a, b) => b.nbVoteTotal - a.nbVoteTotal).slice(0, 3);
                 const waiting = c.nbVoteValide === 0 || l.first.nbVoteTotal === 0;
                 const pi = waiting ? AUTRE : partiInfo(l.first.numeroPartiPolitique, l.first.abreviationPartiPolitique);
+                const avance = c.nbBureauTotal ? (c.nbBureauComplete / c.nbBureauTotal) * 100 : 0;
                 return (
                   <article
                     key={c.numeroCirconscription}
-                    className="border border-[var(--border)] bg-[var(--surface)] p-3"
-                    style={{ borderLeft: `4px solid ${pi.color}` }}
+                    className="flex min-w-0 flex-col border border-[var(--border)] bg-[var(--surface)]"
+                    style={{ borderTop: `4px solid ${pi.color}` }}
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <h3 className="text-sm font-black uppercase tracking-tight">{c.nomCirconscription}</h3>
-                      <span className="whitespace-nowrap text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
-                        {waiting ? "En attente" : c.isResultatsFinaux ? "Final" : `${c.nbBureauComplete}/${c.nbBureauTotal} bureaux`}
-                      </span>
+                    <div className="flex items-start justify-between gap-2 px-4 pt-3">
+                      <h3 className="text-base font-black uppercase leading-tight tracking-tight">{c.nomCirconscription}</h3>
+                      {!waiting && (
+                        <span
+                          className="whitespace-nowrap px-2 py-0.5 text-[11px] font-black text-white tabular-nums"
+                          style={{ background: pi.color }}
+                        >
+                          {c.isResultatsFinaux ? "Élu·e" : `${pi.label} + ${fmt(l.gap)}`}
+                        </span>
+                      )}
                     </div>
-                    <ul className="mt-2 space-y-1">
+                    <ul className="flex-1 space-y-2.5 px-4 py-3">
                       {top.map((k, idx) => {
                         const i = partiInfo(k.numeroPartiPolitique, k.abreviationPartiPolitique);
+                        const lead = idx === 0 && !waiting;
                         return (
-                          <li key={k.numeroCandidat} className="flex items-center gap-2 text-sm">
-                            <span
-                              className="inline-block w-12 text-center text-[10px] font-black text-white"
-                              style={{ background: i.color }}
-                            >
-                              {i.label}
-                            </span>
-                            <span className={`flex-1 truncate ${idx === 0 && !waiting ? "font-bold" : ""}`}>
-                              {k.prenom} {k.nom}
-                            </span>
-                            <span className="tabular-nums">{waiting ? "–" : `${pct(k.tauxVote)} %`}</span>
+                          <li key={k.numeroCandidat} className="flex items-center gap-3">
+                            <Avatar photo={photoDe(k)} nom={`${k.prenom} ${k.nom}`} color={i.color} size={lead ? 44 : 32} />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-baseline justify-between gap-2">
+                                <span className={`truncate text-sm ${lead ? "font-black" : "font-semibold"}`}>
+                                  {k.prenom} {k.nom}
+                                </span>
+                                <span className={`whitespace-nowrap tabular-nums ${lead ? "text-base font-black" : "text-sm"}`}>
+                                  {waiting ? "–" : `${pct(k.tauxVote)} %`}
+                                </span>
+                              </div>
+                              <div className="mt-1 flex items-center gap-2">
+                                <span className="text-[10px] font-black uppercase tracking-wider" style={{ color: i.color }}>
+                                  {i.label}
+                                </span>
+                                <div className="h-1.5 flex-1 bg-[var(--surface-2)]">
+                                  <div className="h-full" style={{ width: `${waiting ? 0 : k.tauxVote}%`, background: i.color }} />
+                                </div>
+                                {!waiting && (
+                                  <span className="text-[10px] tabular-nums text-[var(--muted)]">{fmt(k.nbVoteTotal)}</span>
+                                )}
+                              </div>
+                            </div>
                           </li>
                         );
                       })}
                     </ul>
+                    <div className="border-t border-[var(--border)] px-4 py-2">
+                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider text-[var(--muted)]">
+                        <span>{waiting ? "En attente des premiers résultats" : c.isResultatsFinaux ? "Résultat final" : "Bureaux dépouillés"}</span>
+                        <span className="tabular-nums">{c.nbBureauComplete}/{c.nbBureauTotal}</span>
+                      </div>
+                      <div className="mt-1 h-1 bg-[var(--surface-2)]">
+                        <div className="h-full bg-black dark:bg-white" style={{ width: `${avance}%` }} />
+                      </div>
+                    </div>
                   </article>
                 );
               })}
@@ -304,6 +394,19 @@ export default function ElectionLive() {
       <footer className="mt-10 border-t border-[var(--border)] pt-4 text-xs text-[var(--muted)]">
         Source : Élections Québec (données ouvertes), actualisées aux 2 à 5 minutes. Résultats non officiels
         jusqu&apos;à la publication des résultats finaux. Cette page se rafraîchit automatiquement.
+        <span className="mt-2 block">
+          Photos des chefs : Wikimedia Commons —{" "}
+          {Object.values(PARTIS).map((p, idx, arr) =>
+            p.chef ? (
+              <span key={p.label}>
+                <a href={p.chef.source} target="_blank" rel="noopener noreferrer" className="underline hover:text-[#FF0033]">
+                  {p.chef.nom}
+                </a>{" "}
+                ({p.chef.credit}, {p.chef.licence}){idx < arr.length - 1 ? " · " : ""}
+              </span>
+            ) : null,
+          )}
+        </span>
       </footer>
     </div>
   );
